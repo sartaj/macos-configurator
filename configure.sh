@@ -365,24 +365,63 @@ if ! command_exists docker; then
     open "$HOME/Applications/Docker.app"
     
     # Update PATH to point to local Docker installation
-    append_to_profile 'export PATH="$HOME/Applications/Docker.app/Contents/Resources/bin:$PATH"'
+    append_to_profile 'export PATH="$HOME/.docker/bin:$PATH"'
     
     print_success "Docker Desktop installed and configured successfully"
 else
     print_info "Docker already installed"
     
     # Ensure Docker Desktop binary path is in profile
-    append_to_profile 'export PATH="$HOME/Applications/Docker.app/Contents/Resources/bin:$PATH"'
+    append_to_profile 'export PATH="$HOME/.docker/bin:$PATH"'
 fi
 
-# Install Docker Compose plugin if not present
-if ! docker compose version > /dev/null 2>&1; then
-    print_info "Installing Docker Compose plugin..."
-    mkdir -p "$HOME/Library/Application Support/docker/cli-plugins"
-    COMPOSE_URL="https://github.com/docker/compose/releases/latest/download/docker-compose-darwin-arm64"
-    curl -SL "$COMPOSE_URL" -o "$HOME/Library/Application Support/docker/cli-plugins/docker-compose"
-    chmod +x "$HOME/Library/Application Support/docker/cli-plugins/docker-compose"
-    print_success "Docker Compose installed"
+#######################
+# Ruby Environment
+#######################
+
+print_section "Setting up Ruby Environment"
+
+# Install rbenv for Ruby version management
+if ! command_exists rbenv; then
+    print_info "Installing rbenv..."
+    if brew install rbenv ruby-build; then
+        # Initialize rbenv
+        append_to_profile 'eval "$(rbenv init - zsh)"'
+        
+        # Initialize rbenv in current shell
+        eval "$(rbenv init - zsh)"
+        
+        # Install latest stable Ruby version
+        latest_ruby=$(rbenv install -l | grep -v '-' | grep '^\s*[0-9]\.[0-9]\.[0-9]' | tail -1 | xargs)
+        if rbenv install $latest_ruby && rbenv global $latest_ruby; then
+            print_success "Ruby $latest_ruby installed and configured"
+        else
+            print_error "Failed to install Ruby"
+            exit 1
+        fi
+    else
+        print_error "Failed to install rbenv"
+        exit 1
+    fi
+else
+    print_info "rbenv already installed"
+fi
+
+# Install CocoaPods
+if ! command_exists pod; then
+    print_info "Installing CocoaPods..."
+    if gem install cocoapods; then
+        print_success "CocoaPods installed"
+        
+        # Initialize CocoaPods repo
+        print_info "Setting up CocoaPods repo..."
+        pod setup
+    else
+        print_error "Failed to install CocoaPods"
+        exit 1
+    fi
+else
+    print_info "CocoaPods already installed"
 fi
 
 #######################
