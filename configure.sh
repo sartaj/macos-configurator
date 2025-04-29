@@ -476,15 +476,7 @@ print_section "Setting up Ollama"
 if ! command_exists ollama; then
     print_info "Installing Ollama using Homebrew..."
     
-    # First make sure Homebrew Cask is available
-    if brew tap | grep -q "homebrew/cask"; then
-        print_info "Homebrew Cask is already tapped"
-    else
-        print_info "Tapping homebrew/cask..."
-        brew tap homebrew/cask
-    fi
-    
-    # Install Ollama using Homebrew Cask
+    # Install Ollama using Homebrew Cask directly (no need to tap separately)
     if brew install --cask ollama; then
         print_success "Ollama installed successfully via Homebrew"
         
