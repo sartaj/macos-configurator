@@ -440,24 +440,6 @@ else
     fi
 fi
 
-# Install CocoaPods
-if ! command_exists pod; then
-    print_info "Installing CocoaPods..."
-    if gem install cocoapods; then
-        print_success "CocoaPods installed"
-        
-        # Initialize CocoaPods repo
-        print_info "Setting up CocoaPods repo..."
-        pod setup
-    else
-        print_error "Failed to install CocoaPods"
-        exit 1
-    fi
-else
-    print_info "CocoaPods already installed"
-fi
-
-
 #######################
 # Ollama Environment
 #######################
