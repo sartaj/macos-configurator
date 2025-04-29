@@ -392,11 +392,17 @@ if ! command_exists rbenv; then
         eval "$(rbenv init - zsh)"
         
         # Install latest stable Ruby version
-        latest_ruby=$(rbenv install -l | grep -v '-' | grep '^\s*[0-9]\.[0-9]\.[0-9]' | tail -1 | xargs)
-        if rbenv install $latest_ruby && rbenv global $latest_ruby; then
-            print_success "Ruby $latest_ruby installed and configured"
+        latest_ruby=$(rbenv install -l | grep -v '-' | grep -E '^\s*[0-9]+\.[0-9]+\.[0-9]+$' | tail -1 | xargs)
+        print_info "Installing Ruby $latest_ruby..."
+        if rbenv install "$latest_ruby"; then
+            print_info "Setting Ruby $latest_ruby as global default..."
+            rbenv global "$latest_ruby"
+            eval "$(rbenv init -)"
+            print_success "Ruby $latest_ruby installed and set as global version"
+            print_info "Ruby location: $(which ruby)"
+            print_info "Ruby version: $(ruby -v)"
         else
-            print_error "Failed to install Ruby"
+            print_error "Failed to install Ruby $latest_ruby"
             exit 1
         fi
     else
@@ -405,6 +411,33 @@ if ! command_exists rbenv; then
     fi
 else
     print_info "rbenv already installed"
+    
+    # Even if rbenv is installed, update to latest Ruby version
+    print_info "Updating to latest Ruby version..."
+    # Initialize rbenv
+    eval "$(rbenv init - zsh)"
+    
+    # Find and install the latest Ruby version
+    latest_ruby=$(rbenv install -l | grep -v '-' | grep -E '^\s*[0-9]+\.[0-9]+\.[0-9]+$' | tail -1 | xargs)
+    current_ruby=$(rbenv version | cut -d ' ' -f 1)
+    
+    if [ "$latest_ruby" != "$current_ruby" ]; then
+        print_info "Found newer Ruby version: $latest_ruby (current: $current_ruby)"
+        print_info "Installing Ruby $latest_ruby..."
+        if rbenv install "$latest_ruby"; then
+            print_info "Setting Ruby $latest_ruby as global default..."
+            rbenv global "$latest_ruby"
+            eval "$(rbenv init -)"
+            print_success "Ruby $latest_ruby installed and set as global version"
+            print_info "Ruby location: $(which ruby)"
+            print_info "Ruby version: $(ruby -v)"
+        else
+            print_error "Failed to install Ruby $latest_ruby"
+            exit 1
+        fi
+    else
+        print_info "Already using latest Ruby version: $current_ruby"
+    fi
 fi
 
 # Install CocoaPods
@@ -423,6 +456,7 @@ if ! command_exists pod; then
 else
     print_info "CocoaPods already installed"
 fi
+
 
 #######################
 # Ollama Environment
