@@ -506,10 +506,91 @@ fi
 # Wait for Ollama to initialize
 sleep 5
 
+#######################
+# Rust Environment
+#######################
+
+print_section "Setting up Rust Environment"
+
+# Install Rust if not present
+if ! command_exists rustc; then
+    print_info "Installing Rust..."
+    
+    # Run the rustup installer with default settings (non-interactive)
+    if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; then
+        # Source the cargo environment
+        source "$HOME/.cargo/env"
+        
+        # Add cargo environment to profile
+        append_to_profile 'export PATH="$HOME/.cargo/bin:$PATH"'
+        append_to_profile 'source "$HOME/.cargo/env"'
+        
+        # Verify installation
+        print_info "Rust version: $(rustc --version)"
+        print_info "Cargo version: $(cargo --version)"
+        
+        print_success "Rust installed successfully"
+    else
+        print_error "Failed to install Rust"
+        exit 1
+    fi
+else
+    print_info "Rust already installed"
+    print_info "Rust version: $(rustc --version)"
+    print_info "Cargo version: $(cargo --version)"
+    
+    # Update Rust if already installed
+    print_info "Updating Rust..."
+    if rustup update; then
+        print_success "Rust updated successfully"
+    else
+        print_warning "Failed to update Rust, continuing anyway"
+    fi
+fi
+
+# Install common Rust tools
+print_info "Installing common Rust tools..."
+
+# Install cargo-edit for dependency management
+if ! command_exists cargo-add; then
+    print_info "Installing cargo-edit..."
+    if cargo install cargo-edit; then
+        print_success "cargo-edit installed"
+    else
+        print_warning "Failed to install cargo-edit, continuing anyway"
+    fi
+else
+    print_info "cargo-edit already installed"
+fi
+
+# Install clippy for linting
+if rustup component list | grep -q "clippy"; then
+    print_info "Clippy already installed"
+else
+    print_info "Installing clippy..."
+    if rustup component add clippy; then
+        print_success "clippy installed"
+    else
+        print_warning "Failed to install clippy, continuing anyway"
+    fi
+fi
+
+# Install rustfmt for code formatting
+if rustup component list | grep -q "rustfmt"; then
+    print_info "rustfmt already installed"
+else
+    print_info "Installing rustfmt..."
+    if rustup component add rustfmt; then
+        print_success "rustfmt installed"
+    else
+        print_warning "Failed to install rustfmt, continuing anyway"
+    fi
+fi
+
 echo ""
 echo ""
-echo "🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎"
-echo "🍎🍎🍎 Setup Complete! 🍎🍎🍎"
-echo "🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎"
+echo "🍎🍎🍎"
+echo "🍎🍎🍎 Setup Complete!"
+echo "🍎🍎🍎"
 print_success "All development tools have been installed and configured"
 print_info "Please restart your terminal for all changes to take effect"
