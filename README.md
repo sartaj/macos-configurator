@@ -5,7 +5,7 @@ Automated idempotent setup script for macOS development environment. This script
 ## Quick Install
 
 ```bash
-curl -O https://raw.githubusercontent.com/sartaj/macos-configurator/master/configure.sh && bash configure.sh
+curl -H 'Cache-Control: no-cache' -O https://raw.githubusercontent.com/sartaj/macos-configurator/master/configure.sh && bash configure.sh
 ```
 
 ## What Gets Installed
