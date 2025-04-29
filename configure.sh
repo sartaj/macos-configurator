@@ -440,6 +440,32 @@ else
     fi
 fi
 
+# Install CocoaPods
+if ! command_exists pod; then
+    print_info "Installing CocoaPods..."
+    # Make sure we're using rbenv Ruby and not system Ruby
+    eval "$(rbenv init -)"
+    rbenv rehash
+    
+    # Verify we're using the rbenv-managed Ruby
+    print_info "Using Ruby: $(which ruby) ($(ruby -v))"
+    
+    if gem install cocoapods; then
+        # Rehash to update shims for newly installed gems
+        rbenv rehash
+        print_success "CocoaPods installed"
+        
+        # Initialize CocoaPods repo
+        print_info "Setting up CocoaPods repo..."
+        pod setup
+    else
+        print_error "Failed to install CocoaPods"
+        exit 1
+    fi
+else
+    print_info "CocoaPods already installed"
+fi
+
 #######################
 # Ollama Environment
 #######################
@@ -448,32 +474,39 @@ print_section "Setting up Ollama"
 
 # Install Ollama if not present
 if ! command_exists ollama; then
-    print_info "Installing Ollama..."
+    print_info "Installing Ollama using Homebrew..."
     
-    # Create temporary directory for download
-    TEMP_DIR="$HOME/Library/Application Support/macos-profile/tmp"
-    mkdir -p "$TEMP_DIR"
+    # First make sure Homebrew Cask is available
+    if brew tap | grep -q "homebrew/cask"; then
+        print_info "Homebrew Cask is already tapped"
+    else
+        print_info "Tapping homebrew/cask..."
+        brew tap homebrew/cask
+    fi
     
-    # Download and install Ollama
-    OLLAMA_DMG="$TEMP_DIR/Ollama.dmg"
-    curl -L -o "$OLLAMA_DMG" "https://ollama.ai/download/Ollama.dmg"
-    
-    print_info "Mounting Ollama DMG..."
-    hdiutil attach "$OLLAMA_DMG" -nobrowse
-    
-    print_info "Installing Ollama..."
-    # Create Applications directory if it doesn't exist
-    mkdir -p "$HOME/Applications"
-    cp -R "/Volumes/Ollama/Ollama.app" "$HOME/Applications/"
-    
-    print_info "Cleaning up..."
-    hdiutil detach "/Volumes/Ollama"
-    rm -f "$OLLAMA_DMG"
-    
-    print_info "Launching Ollama..."
-    open "$HOME/Applications/Ollama.app"
-    
-    print_success "Ollama installed successfully"
+    # Install Ollama using Homebrew Cask
+    if brew install --cask ollama; then
+        print_success "Ollama installed successfully via Homebrew"
+        
+        # Launch Ollama
+        print_info "Launching Ollama..."
+        open -a Ollama
+    else
+        print_error "Failed to install Ollama via Homebrew"
+        
+        print_info "Attempting alternative installation method..."
+        # Try direct curl installation as fallback
+        if curl -fsSL https://ollama.ai/install.sh | bash; then
+            print_success "Ollama installed successfully via install script"
+            
+            # Launch Ollama
+            print_info "Launching Ollama..."
+            open -a Ollama
+        else
+            print_error "Failed to install Ollama"
+            print_info "Please visit https://ollama.ai for manual installation instructions"
+        fi
+    fi
 else
     print_info "Ollama already installed"
 fi
@@ -483,8 +516,8 @@ sleep 5
 
 echo ""
 echo ""
+echo "🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎"
 echo "🍎🍎🍎 Setup Complete! 🍎🍎🍎"
-echo "🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎"
-echo "🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎"
+echo "🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎"
 print_success "All development tools have been installed and configured"
 print_info "Please restart your terminal for all changes to take effect"
